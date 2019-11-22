@@ -87,7 +87,7 @@ public class HelloWorldWriter {
         hww.run(routingKey, message);
     }
 
-    private static Options getOptions() {
+    public static Options getOptions() {
         final Options options = new Options();
         options.addOption("s", "scope", true, "The scope name of the stream to read from.");
         options.addOption("n", "name", true, "The name of the stream to read from.");
@@ -97,7 +97,7 @@ public class HelloWorldWriter {
         return options;
     }
 
-    private static CommandLine parseCommandLineArgs(Options options, String[] args) throws ParseException {
+    public static CommandLine parseCommandLineArgs(Options options, String[] args) throws ParseException {
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
         return cmd;
