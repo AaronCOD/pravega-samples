@@ -14,8 +14,12 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.core.LoggerContext;
 
+import java.io.File;
 import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,6 +71,7 @@ public class PressureWriter {
         }
     }
     public static void main(String[] args) throws InterruptedException {
+        logger.info("start main");
         Options options = getOptions();
         CommandLine cmd = null;
         try {
