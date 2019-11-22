@@ -94,13 +94,13 @@ public class PressureWriter {
                 while (true) {
                     byte[] b = eventsQueue.poll();
                     final CompletableFuture writeFuture = writer.writeEvent("default_routing", b);
-//                    writeFuture.get();
+                    writeFuture.get();
                     messageCount.incrementAndGet();
                 }
-//            } catch (InterruptedException e) {
-//                System.out.format("%s.%n", e.getMessage());
-//            } catch (ExecutionException e) {
-//                System.out.format("%s.%n", e.getMessage());
+            } catch (InterruptedException e) {
+                logger.error("exception", e);
+            } catch (ExecutionException e) {
+                logger.error("ExecutionException", e);
             }
         }
 
