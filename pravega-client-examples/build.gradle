@@ -54,8 +54,24 @@ task scriptHelloWorldReader(type: CreateStartScripts) {
     classpath = files(jar.archivePath) + sourceSets.main.runtimeClasspath
 }
 
+task scriptPressureWriter(type: CreateStartScripts) {
+    outputDir = file('build/scripts')
+    mainClassName = 'io.pravega.example.gettingstarted.PressureWriter'
+    applicationName = 'pressureWriter'
+    defaultJvmOpts = ["-Dlog4j.configurationFile=resources/log4j2-test.xml"]
+    classpath = files(jar.archivePath) + sourceSets.main.runtimeClasspath
+}
+
 task startHelloWorldWriter(type: JavaExec) {
     main = "io.pravega.example.gettingstarted.HelloWorldWriter"
+    classpath = sourceSets.main.runtimeClasspath
+    if(System.getProperty("exec.args") != null) {
+        args System.getProperty("exec.args").split()
+    }
+}
+
+task startPressureWriter(type: JavaExec) {
+    main = "io.pravega.example.gettingstarted.PressureWriter"
     classpath = sourceSets.main.runtimeClasspath
     if(System.getProperty("exec.args") != null) {
         args System.getProperty("exec.args").split()
@@ -180,6 +196,7 @@ distributions {
                 from project.scriptStreamCutsCli
                 from project.scriptSecureWriter
                 from project.scriptSecureReader
+                from project.scriptPressureWriter
             }
             into('lib') {
                 from(jar)
