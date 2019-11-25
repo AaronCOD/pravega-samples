@@ -28,7 +28,7 @@ public class PressureWriter {
     private final  ClientConfig config;
     private final BlockingQueue<byte[]> eventsQueue = new LinkedBlockingQueue<>(10000);
     private static final int MESSAGE_SIZE = 500 * 1024;
-    private static final int THREAD_POOL_SIZE = 10;
+    private static final int THREAD_POOL_SIZE = 20;
     private final AtomicInteger messageCount = new AtomicInteger(0);
     private static final int READER_TIMEOUT_MS = 1000;
     public PressureWriter(String scope, String streamName, URI controllerURI) {
@@ -164,7 +164,7 @@ public class PressureWriter {
                 r.nextBytes(b);
                 if (!eventsQueue.offer(b)) {
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(10000);
                     } catch (InterruptedException e) {
                         logger.error("exception", e);
                     }
