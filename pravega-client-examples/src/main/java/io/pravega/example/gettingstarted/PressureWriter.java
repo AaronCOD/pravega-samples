@@ -2,24 +2,17 @@ package io.pravega.example.gettingstarted;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.ClientFactory;
+import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.admin.StreamManager;
-import io.pravega.client.stream.EventStreamWriter;
-import io.pravega.client.stream.EventWriterConfig;
-import io.pravega.client.stream.ScalingPolicy;
-import io.pravega.client.stream.StreamConfiguration;
+import io.pravega.client.stream.*;
 import io.pravega.client.stream.impl.ByteArraySerializer;
-import io.pravega.client.stream.impl.JavaSerializer;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.*;
-import org.apache.logging.log4j.core.LoggerContext;
 
-import java.io.File;
 import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,8 +28,9 @@ public class PressureWriter {
     private final  ClientConfig config;
     private final BlockingQueue<byte[]> eventsQueue = new LinkedBlockingQueue<>(10000);
     private static final int MESSAGE_SIZE = 500 * 1024;
-    private static final int THREAD_POOL_SIZE = 200;
+    private static final int THREAD_POOL_SIZE = 10;
     private final AtomicInteger messageCount = new AtomicInteger(0);
+    private static final int READER_TIMEOUT_MS = 1000;
     public PressureWriter(String scope, String streamName, URI controllerURI) {
         this.scope = scope;
         this.streamName = streamName;
@@ -52,13 +46,21 @@ public class PressureWriter {
                 .scalingPolicy(ScalingPolicy.fixed(1))
                 .build();
         final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
+        final String readerGroup = "readerGroup-default";
+        final ReaderGroupConfig readerGroupConfig = ReaderGroupConfig.builder()
+                .stream(Stream.of(scope, streamName))
+                .build();
+        try (ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(scope, controllerURI)) {
+            readerGroupManager.createReaderGroup(readerGroup, readerGroupConfig);
+        }
     }
 
     public void startWrite() throws InterruptedException {
-        ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+        ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE * 2);
         executor.submit(new EventGenerator());
         for(int i = 0 ; i < THREAD_POOL_SIZE - 1; i++) {
-            executor.submit(new WriterRunnable());
+            executor.submit(new WriterRunnable("routingKey" + i));
+            executor.submit(new ReaderRunnable("reader" + i));
         }
         logger.info("dispatched writers to {} threads", THREAD_POOL_SIZE);
         while(true){
@@ -89,8 +91,48 @@ public class PressureWriter {
         writer.startWrite();
     }
 
-     class WriterRunnable implements Runnable {
+    class ReaderRunnable implements Runnable {
+
+        private final String reader;
+
+        ReaderRunnable(String reader) {
+            this.reader = reader;
+        }
+
         @Override
+        public void run() {
+            try (ClientFactory clientFactory = ClientFactory.withScope(scope, controllerURI);
+                 EventStreamReader<byte[]> readerStream = clientFactory.createReader(reader,
+                         "readerGroup-default",
+                         new ByteArraySerializer(),
+                         ReaderConfig.builder().build())) {
+                System.out.format("Reading all the events from %s/%s%n", scope, streamName);
+                EventRead<byte[]> event = null;
+                do {
+                    try {
+                        event = readerStream.readNextEvent(READER_TIMEOUT_MS);
+                        if (event.getEvent() != null) {
+                           logger.info("Read event with size {}", event.getEvent().length);
+                        }
+                    } catch (ReinitializationRequiredException e) {
+                        //There are certain circumstances where the reader needs to be reinitialized
+                        e.printStackTrace();
+                    }
+                } while (event != null);
+                logger.info("No more events from {}, {}", scope, streamName);
+            }
+        }
+    }
+
+     class WriterRunnable implements Runnable {
+
+        private final String routingKey;
+
+         WriterRunnable(String routingKey) {
+             this.routingKey = routingKey;
+         }
+
+         @Override
         public void run() {
             try (ClientFactory clientFactory = ClientFactory.withScope(scope, controllerURI);
                  EventStreamWriter<byte[]> writer = clientFactory.createEventWriter(streamName,
@@ -110,6 +152,8 @@ public class PressureWriter {
         }
 
     }
+
+
 
     class EventGenerator implements Runnable {
         private final Random r = new Random();
