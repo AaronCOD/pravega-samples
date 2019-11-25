@@ -26,11 +26,11 @@ public class PressureWriter {
     private final String streamName;
     private final URI controllerURI;
     private final  ClientConfig config;
-    private final BlockingQueue<byte[]> eventsQueue = new LinkedBlockingQueue<>(100);
+    private final BlockingQueue<byte[]> eventsQueue = new LinkedBlockingQueue<>(1000);
     private static final int MESSAGE_SIZE = 500 * 1024;
     private static final int THREAD_POOL_SIZE = 20;
     private final AtomicInteger messageCount = new AtomicInteger(0);
-    private static final int READER_TIMEOUT_MS = 1000;
+    private static final int READER_TIMEOUT_MS = 30 * 1000;
     public PressureWriter(String scope, String streamName, URI controllerURI) {
         this.scope = scope;
         this.streamName = streamName;
@@ -112,7 +112,7 @@ public class PressureWriter {
                 do {
                     try {
                         event = readerStream.readNextEvent(READER_TIMEOUT_MS);
-                        if (event.getEvent() != null) {
+                        if (event != null) {
                            logger.info("Read event with size {}", event.getEvent().length);
                         }
                     } catch (ReinitializationRequiredException e) {
@@ -141,6 +141,8 @@ public class PressureWriter {
                          EventWriterConfig.builder().build())) {
                 while (true) {
                     byte[] b = eventsQueue.poll();
+                    if (b == null)
+                        continue;
                     final CompletableFuture writeFuture = writer.writeEvent("default_routing", b);
                     writeFuture.get();
                     messageCount.incrementAndGet();
@@ -166,7 +168,7 @@ public class PressureWriter {
                 r.nextBytes(b);
                 if (!eventsQueue.offer(b)) {
                     try {
-                        Thread.sleep(10000);
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         logger.error("exception", e);
                     }
