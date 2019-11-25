@@ -15,9 +15,8 @@
         </RollingFile>
     </Appenders>
     <Loggers>
-        <Logger name="R" level="INFO"/>
         <Root level="debug">
-            <AppenderRef ref="Console"/>
+            <AppenderRef ref="R"/>
         </Root>
     </Loggers>
 </Configuration>
