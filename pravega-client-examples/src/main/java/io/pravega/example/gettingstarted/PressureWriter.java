@@ -65,11 +65,12 @@ public class PressureWriter {
         logger.info("dispatched writers to {} threads", THREAD_POOL_SIZE);
         while(true){
             long start = System.nanoTime();
+            int n1 = messageCount.get();
             Thread.sleep(1000);
             long end = System.nanoTime();
-            logger.info("sent {} message in {} us \n", messageCount.get(), (end - start)/1000);
+            logger.info("sent {} message in {} us \n", messageCount.get() - n1, (end - start)/1000);
             logger.info("event queue size {} \n", eventsQueue.size());
-            messageCount.set(0);
+
         }
     }
     public static void main(String[] args) throws InterruptedException {
@@ -81,7 +82,7 @@ public class PressureWriter {
         } catch (ParseException e) {
             logger.error("exception", e);
             final HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("HelloWorldWriter", options);
+            formatter.printHelp("PressureWriter", options);
             System.exit(1);
         }
         final String uriString = cmd.getOptionValue("uri") == null ? Constants.DEFAULT_CONTROLLER_URI : cmd.getOptionValue("uri");
@@ -116,7 +117,7 @@ public class PressureWriter {
                         }
                     } catch (ReinitializationRequiredException e) {
                         //There are certain circumstances where the reader needs to be reinitialized
-                        e.printStackTrace();
+                        logger.error("Read event exception", e);
                     }
                 } while (event != null);
                 logger.info("No more events from {}, {}", scope, streamName);
@@ -143,11 +144,12 @@ public class PressureWriter {
                     final CompletableFuture writeFuture = writer.writeEvent("default_routing", b);
                     writeFuture.get();
                     messageCount.incrementAndGet();
+                    logger.info("sent message");
                 }
             } catch (InterruptedException e) {
                 logger.error("exception", e);
             } catch (ExecutionException e) {
-                logger.error("ExecutionException", e);
+                logger.error("writer ExecutionException", e);
             }
         }
 

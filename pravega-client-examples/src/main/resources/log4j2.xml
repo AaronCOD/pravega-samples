@@ -4,8 +4,18 @@
         <Console name="Console">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
+        <RollingFile name="R" fileName="pressurewriter.log"
+                     filePattern="pressurewriter.log.%d{yyyyMMdd-HHmmss}.gz">
+            <PatternLayout>
+                <Pattern>%d{ISO8601} [%t] %5p  %F (line %L) %m%n%ex</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="50 MB"/>
+            </Policies>
+        </RollingFile>
     </Appenders>
     <Loggers>
+        <Logger name="R" level="INFO"/>
         <Root level="debug">
             <AppenderRef ref="Console"/>
         </Root>
