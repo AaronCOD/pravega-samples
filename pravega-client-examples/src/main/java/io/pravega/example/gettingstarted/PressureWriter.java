@@ -86,7 +86,7 @@ public class PressureWriter {
             System.exit(1);
         }
         final String uriString = cmd.getOptionValue("uri") == null ? Constants.DEFAULT_CONTROLLER_URI : cmd.getOptionValue("uri");
-        PressureWriter writer = new PressureWriter("aaron", "pressure", URI.create(uriString));
+        PressureWriter writer = new PressureWriter("aaron", "pressure1", URI.create(uriString));
         writer.init();
         logger.info("start to write to {}", uriString);
         writer.startWrite();
@@ -107,7 +107,7 @@ public class PressureWriter {
                          "readerGroup-default",
                          new ByteArraySerializer(),
                          ReaderConfig.builder().build())) {
-                System.out.format("Reading all the events from %s/%s%n", scope, streamName);
+               logger.info("Reading all the events from {} {}", scope, streamName);
                 EventRead<byte[]> event = null;
                 do {
                     try {
