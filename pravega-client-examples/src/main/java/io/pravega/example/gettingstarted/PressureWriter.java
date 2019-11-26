@@ -145,7 +145,7 @@ public class PressureWriter {
                         Thread.sleep(1000);
                         continue;
                     }
-                    final CompletableFuture writeFuture = writer.writeEvent("default_routing", b);
+                    final CompletableFuture writeFuture = writer.writeEvent(routingKey, b);
                     writeFuture.get();
                     messageCount.incrementAndGet();
 //                    logger.info("sent message");
