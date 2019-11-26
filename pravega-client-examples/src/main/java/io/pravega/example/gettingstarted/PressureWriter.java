@@ -43,7 +43,7 @@ public class PressureWriter {
         final boolean scopeIsNew = streamManager.createScope(scope);
 
         StreamConfiguration streamConfig = StreamConfiguration.builder()
-                .scalingPolicy(ScalingPolicy.fixed(1))
+                .scalingPolicy(ScalingPolicy.fixed(1)).retentionPolicy(RetentionPolicy.bySizeBytes(1024))
                 .build();
         final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
         final String readerGroup = "readerGroup-default";
