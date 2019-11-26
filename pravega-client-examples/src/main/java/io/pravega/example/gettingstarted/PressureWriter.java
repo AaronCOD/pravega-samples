@@ -27,7 +27,7 @@ public class PressureWriter {
     private final URI controllerURI;
     private final  ClientConfig config;
     private final BlockingQueue<byte[]> eventsQueue = new LinkedBlockingQueue<>(1000);
-    private static final int MESSAGE_SIZE = 500 * 1024;
+    private static final int MESSAGE_SIZE = 100 * 1024;
     private static final int THREAD_POOL_SIZE = 20;
     private final AtomicInteger messageCount = new AtomicInteger(0);
     private static final int READER_TIMEOUT_MS = 30 * 1000;
@@ -141,12 +141,14 @@ public class PressureWriter {
                          EventWriterConfig.builder().build())) {
                 while (true) {
                     byte[] b = eventsQueue.poll();
-                    if (b == null)
+                    if (b == null) {
+                        Thread.sleep(1000);
                         continue;
+                    }
                     final CompletableFuture writeFuture = writer.writeEvent("default_routing", b);
                     writeFuture.get();
                     messageCount.incrementAndGet();
-                    logger.info("sent message");
+//                    logger.info("sent message");
                 }
             } catch (InterruptedException e) {
                 logger.error("exception", e);
