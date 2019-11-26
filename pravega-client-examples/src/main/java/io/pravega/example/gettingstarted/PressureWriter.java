@@ -27,7 +27,7 @@ public class PressureWriter {
     private final URI controllerURI;
     private final  ClientConfig config;
     private final BlockingQueue<byte[]> eventsQueue = new LinkedBlockingQueue<>(1000);
-    private static final int MESSAGE_SIZE = 100 * 1024;
+    private static final int MESSAGE_SIZE = 10 * 1024;
     private static final int THREAD_POOL_SIZE = 20;
     private final AtomicInteger messageCount = new AtomicInteger(0);
     private static final int READER_TIMEOUT_MS = 30 * 1000;
