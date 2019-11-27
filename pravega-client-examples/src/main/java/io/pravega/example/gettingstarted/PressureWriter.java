@@ -31,15 +31,17 @@ public class PressureWriter {
     private static final int THREAD_POOL_SIZE = 40;
     private final AtomicInteger messageCount = new AtomicInteger(0);
     private static final int READER_TIMEOUT_MS = 30 * 1000;
-    private int eventSize;
-    private int threadSize;
-    public PressureWriter(String scope, String streamName, URI controllerURI, int eventSize, int threadSize) {
+    private final int eventSize;
+    private final int threadSize;
+    private final boolean sync;
+    public PressureWriter(String scope, String streamName, URI controllerURI, int eventSize, int threadSize, boolean sync) {
         this.scope = scope;
         this.streamName = streamName;
         this.controllerURI = controllerURI;
         this.config = ClientConfig.builder().controllerURI(controllerURI).build();
         this.eventSize = eventSize;
         this.threadSize = threadSize;
+        this.sync = sync;
     }
 
     public void init(){
@@ -95,8 +97,10 @@ public class PressureWriter {
         final String uriString = cmd.getOptionValue("uri") == null ? Constants.DEFAULT_CONTROLLER_URI : cmd.getOptionValue("uri");
         final int threadSize = cmd.getOptionValue("thread") == null ?  THREAD_POOL_SIZE: Integer.parseInt(cmd.getOptionValue("thread"));
         final int eventSize = cmd.getOptionValue("event") == null ?  MESSAGE_SIZE: Integer.parseInt(cmd.getOptionValue("event"));
+        final boolean sync = cmd.getOptionValue("sync") == null || Boolean.parseBoolean(cmd.getOptionValue("sync"));
+
         logger.info("start main with config: thread {} message {}",threadSize, eventSize);
-        PressureWriter writer = new PressureWriter("aaron", "pressure-"+ eventSize +"-" + threadSize, URI.create(uriString), eventSize, threadSize);
+        PressureWriter writer = new PressureWriter("aaron", "pressure-"+ eventSize +"-" + threadSize, URI.create(uriString), eventSize, threadSize, sync);
         writer.init();
         logger.info("start to write to {}", uriString);
         writer.startWrite();
@@ -156,8 +160,9 @@ public class PressureWriter {
                         continue;
                     }
                     final CompletableFuture writeFuture = writer.writeEvent(routingKey, b);
-                    writeFuture.get();
-                    messageCount.incrementAndGet();
+                    if (sync)
+                        writeFuture.get();
+//                    messageCount.incrementAndGet();
 //                    logger.info("sent message");
                 }
             } catch (InterruptedException e) {
@@ -180,10 +185,12 @@ public class PressureWriter {
                 r.nextBytes(b);
                 if (!eventsQueue.offer(b)) {
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                         logger.error("exception", e);
                     }
+                } else {
+                    messageCount.incrementAndGet();
                 }
             }
         }

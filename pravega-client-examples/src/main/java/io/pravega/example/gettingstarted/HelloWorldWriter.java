@@ -96,6 +96,7 @@ public class HelloWorldWriter {
         options.addOption("m", "message", true, "The message to write.");
         options.addOption("t", "thread", true, "Thread pool size");
         options.addOption("e", "event", true, "The event size");
+        options.addOption("y", "sync", true, "Sync mode");
         return options;
     }
 
