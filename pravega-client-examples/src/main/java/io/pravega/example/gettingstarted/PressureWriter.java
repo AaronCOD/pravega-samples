@@ -28,7 +28,7 @@ public class PressureWriter {
     private final  ClientConfig config;
     private final BlockingQueue<byte[]> eventsQueue = new LinkedBlockingQueue<>(1000);
     private static final int MESSAGE_SIZE = 10 * 1024;
-    private static final int THREAD_POOL_SIZE = 20;
+    private static final int THREAD_POOL_SIZE = 40;
     private final AtomicInteger messageCount = new AtomicInteger(0);
     private static final int READER_TIMEOUT_MS = 30 * 1000;
     public PressureWriter(String scope, String streamName, URI controllerURI) {
@@ -42,10 +42,13 @@ public class PressureWriter {
         StreamManager streamManager = StreamManager.create(controllerURI);
         final boolean scopeIsNew = streamManager.createScope(scope);
 
+
         StreamConfiguration streamConfig = StreamConfiguration.builder()
                 .scalingPolicy(ScalingPolicy.fixed(1)).retentionPolicy(RetentionPolicy.bySizeBytes(1024 * 1024 * 1024))
                 .build();
-        final boolean streamIsNew = streamManager.updateStream(scope, streamName, streamConfig);
+
+        final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
+
         final String readerGroup = "readerGroup-default";
         final ReaderGroupConfig readerGroupConfig = ReaderGroupConfig.builder()
                 .stream(Stream.of(scope, streamName))
@@ -86,7 +89,7 @@ public class PressureWriter {
             System.exit(1);
         }
         final String uriString = cmd.getOptionValue("uri") == null ? Constants.DEFAULT_CONTROLLER_URI : cmd.getOptionValue("uri");
-        PressureWriter writer = new PressureWriter("aaron", "pressure1", URI.create(uriString));
+        PressureWriter writer = new PressureWriter("aaron", "pressure"+MESSAGE_SIZE, URI.create(uriString));
         writer.init();
         logger.info("start to write to {}", uriString);
         writer.startWrite();
