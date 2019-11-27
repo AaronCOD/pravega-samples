@@ -45,7 +45,7 @@ public class PressureWriter {
         StreamConfiguration streamConfig = StreamConfiguration.builder()
                 .scalingPolicy(ScalingPolicy.fixed(1)).retentionPolicy(RetentionPolicy.bySizeBytes(1024 * 1024 * 1024))
                 .build();
-        final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
+        final boolean streamIsNew = streamManager.updateStream(scope, streamName, streamConfig);
         final String readerGroup = "readerGroup-default";
         final ReaderGroupConfig readerGroupConfig = ReaderGroupConfig.builder()
                 .stream(Stream.of(scope, streamName))
