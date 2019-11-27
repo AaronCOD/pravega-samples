@@ -81,7 +81,7 @@ public class PressureWriter {
         }
     }
     public static void main(String[] args) throws InterruptedException {
-        logger.info("start main with config: thread {} message {}",THREAD_POOL_SIZE, MESSAGE_SIZE);
+
         Options options = getOptions();
         CommandLine cmd = null;
         try {
@@ -95,6 +95,7 @@ public class PressureWriter {
         final String uriString = cmd.getOptionValue("uri") == null ? Constants.DEFAULT_CONTROLLER_URI : cmd.getOptionValue("uri");
         final int threadSize = cmd.getOptionValue("thread") == null ?  THREAD_POOL_SIZE: Integer.parseInt(cmd.getOptionValue("thread"));
         final int eventSize = cmd.getOptionValue("event") == null ?  MESSAGE_SIZE: Integer.parseInt(cmd.getOptionValue("event"));
+        logger.info("start main with config: thread {} message {}",threadSize, eventSize);
         PressureWriter writer = new PressureWriter("aaron", "pressure-"+ MESSAGE_SIZE +"-" + THREAD_POOL_SIZE, URI.create(uriString), eventSize, threadSize);
         writer.init();
         logger.info("start to write to {}", uriString);
