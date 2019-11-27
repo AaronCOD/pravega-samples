@@ -121,8 +121,8 @@ public class PressureWriter {
                 do {
                     try {
                         event = readerStream.readNextEvent(READER_TIMEOUT_MS);
-                        if (event != null) {
-                           logger.info("Read event with size {}", event.getEvent().length);
+                        if (event != null && event.getEvent() != null) {
+                           logger.debug("Read event with size {}", event.getEvent().length);
                         }
                     } catch (Exception e) {
                         //There are certain circumstances where the reader needs to be reinitialized
