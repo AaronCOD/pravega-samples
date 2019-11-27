@@ -96,7 +96,7 @@ public class PressureWriter {
         final int threadSize = cmd.getOptionValue("thread") == null ?  THREAD_POOL_SIZE: Integer.parseInt(cmd.getOptionValue("thread"));
         final int eventSize = cmd.getOptionValue("event") == null ?  MESSAGE_SIZE: Integer.parseInt(cmd.getOptionValue("event"));
         logger.info("start main with config: thread {} message {}",threadSize, eventSize);
-        PressureWriter writer = new PressureWriter("aaron", "pressure-"+ MESSAGE_SIZE +"-" + THREAD_POOL_SIZE, URI.create(uriString), eventSize, threadSize);
+        PressureWriter writer = new PressureWriter("aaron", "pressure-"+ eventSize +"-" + threadSize, URI.create(uriString), eventSize, threadSize);
         writer.init();
         logger.info("start to write to {}", uriString);
         writer.startWrite();
