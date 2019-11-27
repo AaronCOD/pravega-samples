@@ -94,6 +94,8 @@ public class HelloWorldWriter {
         options.addOption("u", "uri", true, "The URI to the controller in the form tcp://host:port");
         options.addOption("r", "routingKey", true, "The routing key of the message to write.");
         options.addOption("m", "message", true, "The message to write.");
+        options.addOption("t", "thread", true, "Thread pool size");
+        options.addOption("e", "event", true, "The event size");
         return options;
     }
 

@@ -31,11 +31,15 @@ public class PressureWriter {
     private static final int THREAD_POOL_SIZE = 40;
     private final AtomicInteger messageCount = new AtomicInteger(0);
     private static final int READER_TIMEOUT_MS = 30 * 1000;
-    public PressureWriter(String scope, String streamName, URI controllerURI) {
+    private int eventSize;
+    private int threadSize;
+    public PressureWriter(String scope, String streamName, URI controllerURI, int eventSize, int threadSize) {
         this.scope = scope;
         this.streamName = streamName;
         this.controllerURI = controllerURI;
         this.config = ClientConfig.builder().controllerURI(controllerURI).build();
+        this.eventSize = eventSize;
+        this.threadSize = threadSize;
     }
 
     public void init(){
@@ -59,13 +63,13 @@ public class PressureWriter {
     }
 
     public void startWrite() throws InterruptedException {
-        ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE * 2);
+        ExecutorService executor = Executors.newFixedThreadPool(threadSize * 2);
         executor.submit(new EventGenerator());
-        for(int i = 0 ; i < THREAD_POOL_SIZE - 1; i++) {
+        for(int i = 0 ; i < threadSize - 1; i++) {
             executor.submit(new WriterRunnable("routingKey" + i));
             executor.submit(new ReaderRunnable("reader" + i));
         }
-        logger.info("dispatched writers to {} threads", THREAD_POOL_SIZE);
+        logger.info("dispatched writers and readers to {} threads", threadSize);
         while(true){
             long start = System.nanoTime();
             int n1 = messageCount.get();
@@ -77,7 +81,7 @@ public class PressureWriter {
         }
     }
     public static void main(String[] args) throws InterruptedException {
-        logger.info("start main");
+        logger.info("start main with config: thread {} message {}",THREAD_POOL_SIZE, MESSAGE_SIZE);
         Options options = getOptions();
         CommandLine cmd = null;
         try {
@@ -89,7 +93,9 @@ public class PressureWriter {
             System.exit(1);
         }
         final String uriString = cmd.getOptionValue("uri") == null ? Constants.DEFAULT_CONTROLLER_URI : cmd.getOptionValue("uri");
-        PressureWriter writer = new PressureWriter("aaron", "pressure"+MESSAGE_SIZE, URI.create(uriString));
+        final int threadSize = cmd.getOptionValue("thread") == null ?  THREAD_POOL_SIZE: Integer.parseInt(cmd.getOptionValue("thread"));
+        final int eventSize = cmd.getOptionValue("event") == null ?  MESSAGE_SIZE: Integer.parseInt(cmd.getOptionValue("event"));
+        PressureWriter writer = new PressureWriter("aaron", "pressure-"+ MESSAGE_SIZE +"-" + THREAD_POOL_SIZE, URI.create(uriString), eventSize, threadSize);
         writer.init();
         logger.info("start to write to {}", uriString);
         writer.startWrite();
@@ -118,7 +124,7 @@ public class PressureWriter {
                         if (event != null) {
                            logger.info("Read event with size {}", event.getEvent().length);
                         }
-                    } catch (ReinitializationRequiredException e) {
+                    } catch (Exception e) {
                         //There are certain circumstances where the reader needs to be reinitialized
                         logger.error("Read event exception", e);
                     }
@@ -169,7 +175,7 @@ public class PressureWriter {
         @Override
         public void run() {
             while(true) {
-                byte[] b = new byte[MESSAGE_SIZE];
+                byte[] b = new byte[eventSize];
                 r.nextBytes(b);
                 if (!eventsQueue.offer(b)) {
                     try {
