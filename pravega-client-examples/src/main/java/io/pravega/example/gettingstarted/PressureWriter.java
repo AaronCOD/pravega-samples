@@ -48,13 +48,13 @@ public class PressureWriter {
         StreamManager streamManager = StreamManager.create(controllerURI);
         final boolean scopeIsNew = streamManager.createScope(scope);
 
-
+        logger.info("created streamManager");
         StreamConfiguration streamConfig = StreamConfiguration.builder()
                 .scalingPolicy(ScalingPolicy.fixed(1)).retentionPolicy(RetentionPolicy.bySizeBytes(1024 * 1024 * 1024))
                 .build();
 
         final boolean streamIsNew = streamManager.createStream(scope, streamName, streamConfig);
-
+        logger.info("created stream {} in scope {}", streamName, scope);
         final String readerGroup = "readerGroup-default";
         final ReaderGroupConfig readerGroupConfig = ReaderGroupConfig.builder()
                 .stream(Stream.of(scope, streamName))
@@ -62,6 +62,7 @@ public class PressureWriter {
         try (ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(scope, controllerURI)) {
             readerGroupManager.createReaderGroup(readerGroup, readerGroupConfig);
         }
+        logger.info("created ReaderGroup");
     }
 
     public void startWrite() throws InterruptedException {
