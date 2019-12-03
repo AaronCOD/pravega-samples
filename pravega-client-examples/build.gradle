@@ -58,7 +58,7 @@ task scriptPressureWriter(type: CreateStartScripts) {
     outputDir = file('build/scripts')
     mainClassName = 'io.pravega.example.gettingstarted.PressureWriter'
     applicationName = 'pressureWriter'
-//    defaultJvmOpts = ["-Dlog4j.configurationFile=file:resources/log4j2.xml"]
+    defaultJvmOpts = ["--add-opens java.base/jdk.internal.misc=ALL-UNNAMED -Dio.netty.tryReflectionSetAccessible=true"]
     classpath = files(jar.archivePath) + sourceSets.main.runtimeClasspath
 }
 
